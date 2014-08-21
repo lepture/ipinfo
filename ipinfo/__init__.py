@@ -1,7 +1,7 @@
 # coding: utf-8
 """
-    ipcity.parser
-    ~~~~~~~~~~~~~
+    ipinfo
+    ~~~~~~
 
     |4bit|255*4bit|data index|data block|
 """
@@ -10,6 +10,9 @@ import mmap
 import socket
 from struct import Struct
 from collections import namedtuple
+
+__all__ = ['IpInfo', 'Database']
+__version__ = '0.1'
 
 IpInfo = namedtuple('IpInfo', [
     'country', 'region', 'city', 'latitude', 'longitude'
