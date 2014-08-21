@@ -9,6 +9,11 @@
 import mmap
 import socket
 from struct import Struct
+from collections import namedtuple
+
+IpInfo = namedtuple('IpInfo', [
+    'country', 'region', 'city', 'latitude', 'longitude'
+])
 
 unpack_long = Struct('>L').unpack
 unpack_char = Struct('B').unpack
@@ -22,7 +27,6 @@ class Database(object):
         self._buf = buf
 
         index_count, = unpack_long(buf[:4])
-        self._nonzero, = unpack_char(buf[4])
         # index offset: index length + 4 + 1020(1-255) - 1
         self._offset = index_count * 8 + 1023
 
@@ -40,10 +44,6 @@ class Database(object):
         # position in the index block
         count, = unpack_long(self._buf[fip_offset:fip_offset + 4])
         pos = count * 8
-
-        # not in record
-        if fip > self._nonzero and not pos:
-            return None
 
         offset = pos + 1024
         data_pos = None
@@ -64,5 +64,12 @@ class Database(object):
 
     def lookup(self, ip):
         value = self._lookup_ipv4(ip)
-        # TODO
-        return value
+        if not value:
+            return None
+        values = value.split()
+        length = len(values)
+        if length > 5:
+            values = values[:5]
+        elif length < 5:
+            values.extend([''] * (5 - length))
+        return IpInfo(*values)
