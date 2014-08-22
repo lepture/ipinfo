@@ -12,6 +12,7 @@ else:
 
 pack_long = Struct('>L').pack
 pack_char = Struct('B').pack
+ip2int = lambda ip: Struct('!I').unpack(socket.inet_aton(ip))[0]
 
 
 def first_ip(ip):
@@ -28,14 +29,20 @@ def to_bytes(text, encoding='utf-8'):
 def create_database(lines, filename):
     ip_index = {}
     data_index = []
-    data_block = ''
+    data_block = '\t'
     data_cache = {}
 
-    latest_ip = 1
+    latest_ip = 0
+    latest_end = None
+
     for line in lines:
         start, end = line[0], line[1]
+        if not latest_end or ip2int(start) - ip2int(latest_end) > 1:
+            data_index.append((start, 0))
 
-        text = '\t'.join(map(lambda b: b.strip(), line[2:]))
+        latest_end = end
+
+        text = '\t'.join(map(lambda b: b.strip(), line[2:])).strip()
         text = to_bytes(text)
         if text not in data_cache:
             data_cache[text] = len(data_block)
@@ -56,7 +63,7 @@ def create_database(lines, filename):
     data += pack_long(index_count)
 
     # track of ip index
-    count = 1
+    count = 0
     num = 0
     while count < 256:
         num = ip_index.get(count, num)
