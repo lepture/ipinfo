@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import sys
+import csv
 import socket
 from struct import Struct
 
@@ -26,7 +27,7 @@ def to_bytes(text, encoding='utf-8'):
     return text
 
 
-def create_database(lines, filename):
+def create_database(lines):
     ip_index = {}
     data_index = []
     data_block = '\t'
@@ -75,6 +76,23 @@ def create_database(lines, filename):
         data += socket.inet_aton(ip) + pack_long(offset)
 
     data += data_block
-    with open(filename, 'wb') as f:
-        f.write(data)
     return data
+
+
+if __name__ == '__main__':
+
+    def print_help():
+        print('generate.py <input> <output>')
+
+    if len(sys.argv) < 3 or '-h' in sys.argv or '--help' in sys.argv:
+        print_help()
+        sys.exit(1)
+
+    infile = sys.argv[1]
+    outfile = sys.argv[2]
+
+    with open(infile) as f:
+        data = create_database(csv.reader(f))
+
+    with open(outfile, 'wb') as f:
+        f.write(data)
