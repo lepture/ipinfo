@@ -28,7 +28,13 @@ def to_bytes(text, encoding='utf-8'):
     return text
 
 
-def create_database(lines):
+def csv2dat(rows):
+    """Create dat bytes from csv rows.
+
+    CSV rows should be in format::
+
+        start-ip,end-ip,country,region,city....
+    """
     ip_index = {}
     data_index = []
     data_block = b'\t'
@@ -37,14 +43,14 @@ def create_database(lines):
     latest_ip = 0
     latest_end = None
 
-    for line in lines:
-        start, end = line[0], line[1]
+    for row in rows:
+        start, end = row[0], row[1]
         if not latest_end or ip2int(start) - ip2int(latest_end) > 1:
             data_index.append((start, 0))
 
         latest_end = end
 
-        text = '\t'.join(map(lambda b: b.strip(), line[2:])).strip()
+        text = '\t'.join(map(lambda b: b.strip(), row[2:])).strip()
         text = to_bytes(text)
         if text not in data_cache:
             data_cache[text] = len(data_block)
@@ -83,7 +89,7 @@ def create_database(lines):
 if __name__ == '__main__':
 
     def print_help():
-        print('generate.py <input> <output>')
+        print('./csv2dat <input> <output>')
 
     if len(sys.argv) < 3 or '-h' in sys.argv or '--help' in sys.argv:
         print_help()
@@ -93,7 +99,7 @@ if __name__ == '__main__':
     outfile = sys.argv[2]
 
     with open(infile) as f:
-        data = create_database(csv.reader(f))
+        data = csv2dat(csv.reader(f))
 
     with open(outfile, 'wb') as f:
         f.write(data)
