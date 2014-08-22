@@ -23,17 +23,17 @@ unpack_char = lambda n: Struct('B').unpack(n)[0]
 class IPv4Database(object):
     """Database for search IPv4 address.
 
-    Bytes in the dat file::
+    The data format is similar to 17mon. Bytes in the dat file::
 
-        ----------
-        |  4bit  |        <- [count] (n)
-        --------------
-        | 256 * 4bit |    <- [first ip index]
-        --------------
-        |  n * 8bit  |    <- [ip index]
-        --------------
-        | data block |    <- [data]
-        --------------
+        -------------
+        |  4 bytes  |        <- [count] (n)
+        -----------------
+        | 256 * 4 bytes |    <- [first ip index]
+        -----------------
+        |  n * 8 bytes  |    <- [ip index]
+        -----------------
+        |  data  block  |    <- [data]
+        -----------------
     """
     def __init__(self, filename):
         with open(filename, 'rb') as f:
@@ -44,9 +44,17 @@ class IPv4Database(object):
         index_count = unpack_long(buf[:4])
         # index offset: index length + 4 + 1024(1-256) - 1
         self._offset = index_count * 8 + 1027
+        self._is_closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
     def close(self):
         self._buf.close()
+        self._is_closed = True
 
     def _lookup_ipv4(self, ip):
         nip = socket.inet_aton(ip)
@@ -61,7 +69,7 @@ class IPv4Database(object):
         pos = count * 8
 
         offset = pos + 1028
-        data_pos = None
+        data_pos = 0
         while offset < self._offset:
             endip = self._buf[offset:offset + 4]
             if nip <= endip:
@@ -70,7 +78,6 @@ class IPv4Database(object):
             offset += 8
 
         if not data_pos:
-            # None or 0
             return None
 
         ident = self._offset + data_pos + 1
@@ -79,6 +86,9 @@ class IPv4Database(object):
         return buf.decode('utf-8')
 
     def lookup(self, ip):
+        if self._is_closed:
+            raise ValueError('I/O operation on closed dat file')
+
         value = self._lookup_ipv4(ip)
         if not value:
             return None
