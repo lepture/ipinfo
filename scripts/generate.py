@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # coding: utf-8
 
 import sys
@@ -30,7 +31,7 @@ def to_bytes(text, encoding='utf-8'):
 def create_database(lines):
     ip_index = {}
     data_index = []
-    data_block = '\t'
+    data_block = b'\t'
     data_cache = {}
 
     latest_ip = 0
@@ -56,7 +57,7 @@ def create_database(lines):
 
         data_index.append((end, data_cache[text]))
 
-    data = ''
+    data = b''
     # data index length in bytes
     index_count = len(data_index)
 
