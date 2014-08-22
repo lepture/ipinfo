@@ -99,3 +99,7 @@ class IPv4Database(object):
         elif length < 5:
             values.extend([''] * (5 - length))
         return Info(*values)
+
+    def find(self, ip):
+        """Alias for lookup."""
+        return self.lookup(ip)
